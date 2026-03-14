@@ -128,8 +128,7 @@ with col2:
             
             with st.status("Analyzing Media Integrity...", expanded=True) as status:
                 try:
-                    api_key = st.secrets.get("GOOGLE_API_KEY") or "PASTE_YOUR_NEW_KEY_HERE"
-                    client = genai.Client(api_key=api_key)
+                    client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
                     st.write("🛰️ Connecting to Neural Engine...")
                     instruction = """
                     You are a highly conservative Digital Video Analyst. 
