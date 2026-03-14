@@ -128,9 +128,8 @@ with col2:
             
             with st.status("Analyzing Media Integrity...", expanded=True) as status:
                 try:
-                    # 1. Initialize Gemini
-                    client = genai.Client(api_key='AIzaSyA2ENPX94rSsIwQxJPAPxE5CXF94yRop5g')
-                    
+                    api_key = st.secrets.get("GOOGLE_API_KEY") or "PASTE_YOUR_NEW_KEY_HERE"
+                    client = genai.Client(api_key=api_key)
                     st.write("🛰️ Connecting to Neural Engine...")
                     instruction = """
                     You are a highly conservative Digital Video Analyst. 
