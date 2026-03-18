@@ -14,15 +14,24 @@ st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
+    /* 1. RESTORED: The Vibrant Red/Green/Blue Liquid Background */
     .stApp {
-        background: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
-                    radial-gradient(at 100% 0%, hsla(225,39%,20%,1) 0, transparent 50%);
         background-color: #050505;
+        background-image: 
+            radial-gradient(at 0% 0%, rgba(60, 10, 80, 0.7) 0px, transparent 50%),
+            radial-gradient(at 80% 10%, rgba(120, 10, 50, 0.6) 0px, transparent 50%),
+            radial-gradient(at 20% 90%, rgba(10, 90, 60, 0.5) 0px, transparent 50%),
+            radial-gradient(at 90% 90%, rgba(0, 50, 120, 0.6) 0px, transparent 50%);
         background-attachment: fixed;
     }
 
+    /* 2. THE GHOST BAR KILLER: Force transparency on all Streamlit wrappers */
+    [data-testid="stHeader"] { display: none !important; } /* Hides top bar */
     .block-container { padding-top: 2rem !important; }
-    .stMarkdown div { background: none !important; }
+    [data-testid="stVerticalBlock"], [data-testid="stHorizontalBlock"], .stMarkdown { 
+        background: transparent !important; 
+        box-shadow: none !important;
+    }
 
     .ultra-title {
         font-family: 'Inter', sans-serif;
@@ -33,6 +42,7 @@ st.markdown("""
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         margin-bottom: 0px;
+        line-height: 1.1;
     }
 
     .liquid-glass {
@@ -43,6 +53,7 @@ st.markdown("""
         border-radius: 35px;
         padding: 40px;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        margin-top: 20px;
     }
 
     .verdict-banner {
@@ -65,6 +76,7 @@ st.markdown("""
         box-shadow: 0 10px 30px rgba(0, 113, 227, 0.3) !important;
         transition: all 0.3s !important;
         width: 100%;
+        margin-top: 15px;
     }
     div.stButton > button:hover {
         transform: scale(1.02);
@@ -76,6 +88,7 @@ st.markdown("""
         padding: 5px;
         border-radius: 15px;
         justify-content: center;
+        margin-bottom: 15px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -92,7 +105,7 @@ def load_lottie(url):
 
 # --- 3. FRONT END ---
 st.markdown("<h1 class='ultra-title'>Forensic.</h1>", unsafe_allow_html=True)
-st.markdown("<p style='color: #86868b; font-size: 1.2rem; margin-top:-15px;'>Digital Sports Integrity Framework</p>", unsafe_allow_html=True)
+st.markdown("<p style='color: #86868b; font-size: 1.2rem; margin-top: 0px;'>Digital Sports Integrity Framework</p>", unsafe_allow_html=True)
 
 with st.container():
     st.markdown('<div class="liquid-glass">', unsafe_allow_html=True)
@@ -120,7 +133,6 @@ with st.container():
                     st.error("Cannot load video preview. Ensure the link is public.")
 
         if not media_ready:
-            # THE FIX: Safely load and check the animation
             anim_waiting = load_lottie("https://assets5.lottiefiles.com/packages/lf20_6p8ovm.json")
             if anim_waiting:
                 st_lottie(anim_waiting, height=300)
@@ -166,11 +178,13 @@ with st.container():
                         s.update(label="Audit Complete", state="complete")
                         
                         res_upper = response.text.upper()
-                        if "AUTHENTIC" in res_upper: 
+                        
+                        # STRICT TAG PARSING
+                        if "FINAL_VERDICT: AUTHENTIC" in res_upper: 
                             v_color, v_label, v_icon = "#34c759", "AUTHENTIC", "✅"
-                        elif "MANIPULATED" in res_upper: 
+                        elif "FINAL_VERDICT: MANIPULATED" in res_upper: 
                             v_color, v_label, v_icon = "#ff3b30", "SUSPICIOUS (MANIPULATED)", "⚠️"
-                        elif "UNAUTHORIZED" in res_upper: 
+                        elif "FINAL_VERDICT: UNAUTHORIZED" in res_upper: 
                             v_color, v_label, v_icon = "#ff9500", "UNAUTHORIZED REDISTRIBUTION", "🏴‍☠️"
                         else: 
                             v_color, v_label, v_icon = "#86868b", "INCONCLUSIVE", "❓"
@@ -201,7 +215,6 @@ with st.container():
             st.markdown("🟢 **Neural Engine:** Active")
             st.markdown("🔵 **Uplink:** Waiting for input...")
             
-            # THE FIX: Safely load and check the scanning animation
             anim_status = load_lottie("https://assets10.lottiefiles.com/packages/lf20_st79sc61.json")
             if anim_status:
                 st_lottie(anim_status, height=200)
