@@ -3,125 +3,138 @@ import time
 import os
 import re
 import requests
-import pandas as pd
-import numpy as np
 from google import genai
 from streamlit_lottie import st_lottie
-from streamlit_extras.metric_cards import style_metric_cards
 
-# --- 1. CONFIGURATION ---
-st.set_page_config(page_title="Forensic Analyst Pro", page_icon="🔍", layout="wide", initial_sidebar_state="collapsed")
+# --- 1. GLOBAL PAGE SETUP ---
+st.set_page_config(page_title="Forensic Analyst Ultra", layout="wide", initial_sidebar_state="collapsed")
 
-def load_lottieurl(url):
-    try:
-        r = requests.get(url, timeout=5)
-        return r.json() if r.status_code == 200 else None
-    except: return None
-
-LOTTIE_SCANNING = "https://assets10.lottiefiles.com/packages/lf20_st79sc61.json"
-LOTTIE_WAITING = "https://assets5.lottiefiles.com/packages/lf20_6p8ovm.json"
-
+# --- 2. THE LIQUID GLASS ENGINE (CSS) ---
 st.markdown("""
     <style>
-    .stApp { background-color: #000000; color: #f5f5f7; }
-    .report-card {
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 20px;
-        padding: 30px;
-        margin-top: 20px;
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+    /* Animated Liquid Mesh Background */
+    .stApp {
+        background: radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                    radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                    radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+        background-color: #050505;
+        background-attachment: fixed;
+        overflow: hidden;
     }
-    h1 { background: linear-gradient(180deg, #FFFFFF 0%, #A1A1A1 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 3.5rem !important; }
-    div.stButton > button:first-child { background-color: #0071e3; color: white; border-radius: 980px; padding: 12px 30px; width: 100%; border: none; }
-    .meter-container { background: rgba(255,255,255,0.1); border-radius: 10px; height: 6px; width: 100%; margin-top: 10px; overflow: hidden; }
-    .meter-fill { height: 100%; border-radius: 10px; transition: width 2s ease-in-out; }
+
+    /* The Liquid Glass Card */
+    .liquid-glass {
+        background: rgba(255, 255, 255, 0.01);
+        backdrop-filter: blur(40px) saturate(200%);
+        -webkit-backdrop-filter: blur(40px) saturate(200%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 40px;
+        padding: 50px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+    }
+    .liquid-glass:hover {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transform: translateY(-5px);
+    }
+
+    /* Shimmering Title */
+    .ultra-title {
+        font-family: 'Inter', sans-serif;
+        font-weight: 900;
+        font-size: 5rem !important;
+        letter-spacing: -3px;
+        background: linear-gradient(to bottom, #fff 30%, rgba(255,255,255,0.1));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin-bottom: 0px;
+    }
+
+    /* Liquid Button */
+    div.stButton > button {
+        background: linear-gradient(90deg, #0071e3, #00c6ff) !important;
+        border: none !important;
+        color: white !important;
+        padding: 20px 40px !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        border-radius: 100px !important;
+        box-shadow: 0 10px 30px rgba(0, 113, 227, 0.3) !important;
+        transition: all 0.4s !important;
+    }
+    div.stButton > button:hover {
+        transform: scale(1.05) rotate(-1deg);
+        box-shadow: 0 15px 40px rgba(0, 113, 227, 0.6) !important;
+    }
+
+    /* Custom Scrollbar for the Apple feel */
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. LAYOUT ---
-l_sp, col1, col2, r_sp = st.columns([0.1, 1, 1, 0.1])
+# --- 3. LOGIC HELPER ---
+def load_lottie(url):
+    try: return requests.get(url).json()
+    except: return None
 
-with col1:
-    st.title("Forensic Analysis.")
-    st.markdown("<p style='color: #86868b; font-size: 1.2rem;'>Digital Sports Integrity Framework</p>", unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("", type=["mp4", "mov"])
-    if uploaded_file:
-        st.video(uploaded_file)
-        with st.expander("🔬 Detection Methodology"):
-            st.write("Cross-referencing spatial artifacts with temporal redistribution signatures.")
+# --- 4. FRONT END ---
+st.markdown("<h1 class='ultra-title'>Forensic.</h1>", unsafe_allow_html=True)
+st.markdown("<p style='color: #86868b; font-size: 1.5rem; margin-top:-20px; font-weight:400;'>Advanced Media Integrity Engine</p>", unsafe_allow_html=True)
 
-with col2:
-    st.write("## \n## ")
-    if uploaded_file:
-        if st.button("Initialize Deep Scan"):
-            temp_path = "temp_video.mp4"
-            with open(temp_path, "wb") as f: f.write(uploaded_file.getbuffer())
-            
-            with st.status("Performing Multi-Layer Audit...", expanded=True) as status:
+# Main Container
+st.markdown('<div class="liquid-glass">', unsafe_allow_html=True)
+
+col_left, col_right = st.columns([1, 1], gap="large")
+
+with col_left:
+    file = st.file_uploader("", type=["mp4", "mov"])
+    if file:
+        st.video(file)
+    else:
+        # Beautiful "Empty State" Lottie
+        lottie_waiting = load_lottie("https://assets5.lottiefiles.com/packages/lf20_6p8ovm.json")
+        if lottie_waiting: st_lottie(lottie_waiting, height=400)
+
+with col_right:
+    st.write("## ")
+    if file:
+        if st.button("EXECUTE QUANTUM AUDIT"):
+            with st.status("🔮 Analyzing Light Physics...", expanded=True) as s:
                 try:
-                    # SECURE KEY ACCESS
-                    api_key = st.secrets.get("GEMINI_API_KEY", "PASTE_NEW_KEY_HERE_FOR_LOCAL_TEST")
+                    # Retrieve the secret key you set up earlier
+                    # If local, you can still use the string temporarily
+                    api_key = st.secrets.get("GEMINI_API_KEY", "AIzaSyDD4L7TnfAoXiB96P3Gdlki-_KPqtFwWVA")
                     client = genai.Client(api_key=api_key)
+
+                    # Save and Upload
+                    with open("temp.mp4", "wb") as f: f.write(file.getbuffer())
+                    g_file = client.files.upload(file="temp.mp4")
                     
-                    anim = load_lottieurl(LOTTIE_SCANNING)
-                    if anim: st_lottie(anim, height=120, key="scan")
-                    
-                    instruction = """
-                    You are a Sports Media Expert. Analyze for fakes AND unauthorized restreaming indicators (low bitrate, non-official logos, camera-on-screen).
-                    End with: 
-                    FINAL_VERDICT: [AUTHENTIC, MANIPULATED, or UNAUTHORIZED REDISTRIBUTION]
-                    CONFIDENCE_SCORE: [Number]%
-                    """
-                    
-                    gemini_file = client.files.upload(file=temp_path)
-                    while gemini_file.state.name == "PROCESSING":
+                    while g_file.state.name == "PROCESSING":
                         time.sleep(2)
-                        gemini_file = client.files.get(name=gemini_file.name)
+                        g_file = client.files.get(name=g_file.name)
                     
                     response = client.models.generate_content(
                         model="gemini-3.1-pro-preview",
-                        config={'system_instruction': instruction},
-                        contents=[gemini_file, "Audit this sports clip for content integrity and distribution rights."]
+                        contents=[g_file, "Is this video real or a deepfake? Be highly technical."]
                     )
                     
-                    status.update(label="Audit Complete", state="complete", expanded=False)
+                    s.update(label="Audit Complete", state="complete")
                     
-                    res_upper = response.text.upper()
-                    if "AUTHENTIC" in res_upper: v_color, v_label = "#34c759", "Authentic"
-                    elif "MANIPULATED" in res_upper: v_color, v_label = "#ff3b30", "Manipulated"
-                    elif "UNAUTHORIZED" in res_upper: v_color, v_label = "#ff9500", "Unauthorized"
-                    else: v_color, v_label = "#86868b", "Inconclusive"
+                    # Result UI
+                    st.markdown("### 🧬 Analysis Report")
+                    st.write(response.text)
                     
-                    conf_match = re.search(r'CONFIDENCE_SCORE:\s*(\d+)', res_upper)
-                    conf = int(conf_match.group(1)) if conf_match else 100
-
-                    # Metrics & Visuals
-                    m1, m2 = st.columns(2)
-                    m1.metric("System Verdict", v_label)
-                    m2.metric("Confidence", f"{conf}%")
-                    style_metric_cards(background_color="rgba(255,255,255,0.05)", border_left_color=v_color)
-
-                    st.markdown(f"""<div class="report-card">
-                        <p style='color: #86868b; font-size: 0.8rem;'>Confidence Bar</p>
-                        <div class="meter-container"><div class="meter-fill" style="width: {conf}%; background-color: {v_color};"></div></div>
-                    </div>""", unsafe_allow_html=True)
-
-                    st.markdown(response.text)
-
-                    # EXTRA TOOL: Leak Map
-                    if v_label == "Unauthorized Redistribution":
-                        st.write("---")
-                        st.write("### 🌍 Distribution Leak Map")
-                        map_data = pd.DataFrame(np.random.randn(5, 2) / [50, 50] + [21.1458, 79.0882], columns=['lat', 'lon'])
-                        st.map(map_data)
-
-                except Exception as e: st.error(f"Error: {e}")
-                finally: 
-                    if os.path.exists(temp_path): os.remove(temp_path)
+                except Exception as e: st.error(f"Engine Failure: {e}")
     else:
-        anim = load_lottieurl(LOTTIE_WAITING)
-        if anim: st_lottie(anim, height=250, key="wait")
-        st.info("Awaiting media input for integrity audit.")
+        st.info("System Ready. Waiting for encrypted media uplink...")
 
-st.markdown("<br><p style='text-align: center; color: #424245; font-size: 0.8rem;'>Digital Sports Integrity Framework • IIT Bhilai • Built with Gemini 3.1 Pro</p>", unsafe_allow_html=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+# Footer
+st.markdown("<p style='text-align: center; color: rgba(255,255,255,0.2); font-size: 0.8rem; margin-top: 50px;'>HARWARE ACCELERATED • GEMINI 3.1 PRO • IIT BHILAI</p>", unsafe_allow_html=True)
