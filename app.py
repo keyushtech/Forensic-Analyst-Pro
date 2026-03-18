@@ -45,7 +45,6 @@ st.markdown("""
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
     }
 
-    /* The restored "Red/Green Bar" styling */
     .verdict-banner {
         padding: 20px 30px;
         border-radius: 15px;
@@ -72,7 +71,6 @@ st.markdown("""
         box-shadow: 0 15px 40px rgba(0, 113, 227, 0.6) !important;
     }
     
-    /* Segmented Control Styling for the Upload/URL toggle */
     div[role="radiogroup"] {
         background: rgba(255,255,255,0.05);
         padding: 5px;
@@ -82,9 +80,15 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
+# Safe Loader Function
 def load_lottie(url):
-    try: return requests.get(url).json()
-    except: return None
+    try: 
+        r = requests.get(url, timeout=5)
+        if r.status_code == 200:
+            return r.json()
+        return None
+    except: 
+        return None
 
 # --- 3. FRONT END ---
 st.markdown("<h1 class='ultra-title'>Forensic.</h1>", unsafe_allow_html=True)
@@ -95,7 +99,6 @@ with st.container():
     col_left, col_right = st.columns([1, 1], gap="large")
 
     with col_left:
-        # NEW: Input Selection Toggle
         input_type = st.radio("Media Source", ["📁 Upload File", "🔗 Video URL"], horizontal=True, label_visibility="collapsed")
         
         file = None
@@ -117,7 +120,12 @@ with st.container():
                     st.error("Cannot load video preview. Ensure the link is public.")
 
         if not media_ready:
-            st_lottie(load_lottie("https://assets5.lottiefiles.com/packages/lf20_6p8ovm.json"), height=300)
+            # THE FIX: Safely load and check the animation
+            anim_waiting = load_lottie("https://assets5.lottiefiles.com/packages/lf20_6p8ovm.json")
+            if anim_waiting:
+                st_lottie(anim_waiting, height=300)
+            else:
+                st.info("System Ready. Waiting for encrypted media uplink...")
 
     with col_right:
         if media_ready:
@@ -135,7 +143,6 @@ with st.container():
                         CONFIDENCE_SCORE: [Number]%
                         """
 
-                        # Handle File vs URL for Gemini
                         contents_payload = []
                         if file:
                             with open("temp.mp4", "wb") as f: f.write(file.getbuffer())
@@ -145,21 +152,19 @@ with st.container():
                                 g_file = client.files.get(name=g_file.name)
                             contents_payload = [g_file, "Is this video authentic or manipulated?"]
                         else:
-                            # If it's a URL, we use the Google Search tool so Gemini can look up the link context
                             contents_payload = [f"Analyze the context and validity of this video link: {video_url}. Is it a known official broadcast or a known fake/pirated stream?"]
 
                         response = client.models.generate_content(
                             model="gemini-3.1-pro-preview",
                             config={
                                 'system_instruction': instruction,
-                                'tools': [{'google_search': {}}] # Critical for URL checking
+                                'tools': [{'google_search': {}}]
                             },
                             contents=contents_payload
                         )
                         
                         s.update(label="Audit Complete", state="complete")
                         
-                        # Parsing logic
                         res_upper = response.text.upper()
                         if "AUTHENTIC" in res_upper: 
                             v_color, v_label, v_icon = "#34c759", "AUTHENTIC", "✅"
@@ -173,7 +178,6 @@ with st.container():
                         conf_match = re.search(r'CONFIDENCE_SCORE:\s*(\d+)', res_upper)
                         conf = int(conf_match.group(1)) if conf_match else 100
 
-                        # --- THE RESTORED VERDICT BANNER ---
                         st.markdown(f"""
                         <div class="verdict-banner" style="background: {v_color}15; border-left: 6px solid {v_color};">
                             <div>
@@ -196,7 +200,13 @@ with st.container():
             st.write("### System Status")
             st.markdown("🟢 **Neural Engine:** Active")
             st.markdown("🔵 **Uplink:** Waiting for input...")
-            st_lottie(load_lottie("https://assets10.lottiefiles.com/packages/lf20_st79sc61.json"), height=200)
+            
+            # THE FIX: Safely load and check the scanning animation
+            anim_status = load_lottie("https://assets10.lottiefiles.com/packages/lf20_st79sc61.json")
+            if anim_status:
+                st_lottie(anim_status, height=200)
+            else:
+                st.markdown("📡 *Scanning network frequencies...*")
 
     st.markdown('</div>', unsafe_allow_html=True)
 
