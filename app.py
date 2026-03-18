@@ -2,9 +2,12 @@ import streamlit as st
 import time
 import os
 import re
+import requests
 from google import genai
+from streamlit_lottie import st_lottie
+from streamlit_extras.metric_cards import style_metric_cards
 
-# --- 1. APPLE AESTHETIC CONFIGURATION ---
+# --- 1. CONFIGURATION & ANIMATIONS ---
 st.set_page_config(
     page_title="Forensic Analyst Pro",
     page_icon="🔍",
@@ -12,16 +15,21 @@ st.set_page_config(
     initial_sidebar_state="collapsed"
 )
 
-# Custom CSS for the Apple "Midnight" look + Animations
+def load_lottieurl(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+# Professional Lottie Animations
+lottie_scanning = load_lottieurl("https://lottie.host/86828591-0309-4393-9791-236f0607c376/XyZlJAn323.json") # Radar scan
+lottie_success = load_lottieurl("https://lottie.host/5a914436-b52b-4228-8798-5a41a4a44b82/7ZqH4X8Y2k.json") # Verified check
+
+# Custom CSS for the Apple "Midnight" look
 st.markdown("""
     <style>
-    /* Global Background */
-    .stApp {
-        background-color: #000000;
-        color: #f5f5f7;
-    }
-
-    /* Modern Glassmorphism Card with subtle pulse */
+    .stApp { background-color: #000000; color: #f5f5f7; }
+    
     @keyframes glow {
         0% { box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.8); }
         50% { box-shadow: 0 8px 32px 0 rgba(0, 113, 227, 0.15); }
@@ -39,9 +47,8 @@ st.markdown("""
         animation: glow 4s infinite alternate;
     }
 
-    /* Apple San Francisco Typography */
     h1, h2, h3 {
-        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", sans-serif;
         font-weight: 600 !important;
         letter-spacing: -0.02em !important;
     }
@@ -54,7 +61,6 @@ st.markdown("""
         margin-bottom: 0.5rem !important;
     }
 
-    /* Custom Blue Action Button */
     div.stButton > button:first-child {
         background-color: #0071e3;
         color: white;
@@ -70,10 +76,8 @@ st.markdown("""
     div.stButton > button:first-child:hover {
         background-color: #0077ed;
         transform: scale(1.02);
-        box-shadow: 0 4px 20px rgba(0, 113, 227, 0.4);
     }
 
-    /* Confidence Meter Visuals */
     .meter-container {
         background: rgba(255,255,255,0.1);
         border-radius: 10px;
@@ -85,104 +89,109 @@ st.markdown("""
     .meter-fill {
         height: 100%;
         border-radius: 10px;
-        transition: width 1.5s ease-in-out;
-    }
-
-    /* File Uploader Customization */
-    .stFileUploader {
-        border: 1px dashed rgba(255, 255, 255, 0.2);
-        border-radius: 15px;
-        padding: 20px;
+        transition: width 2s ease-in-out;
     }
     </style>
     """, unsafe_allow_html=True)
 
 # --- 2. FRONT END LAYOUT ---
-# Using columns to create a balanced, wide look
 left_spacer, col1, col2, right_spacer = st.columns([0.1, 1, 1, 0.1])
 
 with col1:
     st.title("Forensic Analysis.")
-    st.markdown("<p style='color: #86868b; font-size: 1.2rem;'>Advanced Deepfake Detection Engine</p>", unsafe_allow_html=True)
+    st.markdown("<p style='color: #86868b; font-size: 1.2rem;'>Advanced Deepfake & Redistribution Engine</p>", unsafe_allow_html=True)
     
-    # Drag and Drop
     uploaded_file = st.file_uploader("", type=["mp4", "mov"])
     
     if uploaded_file:
         st.video(uploaded_file)
         
-        # Adding a professional methodology dropdown 
         with st.expander("🔬 Detection Methodology"):
-            st.write("This engine utilizes a **Null Hypothesis Framework**. It actively attempts to attribute visual anomalies to standard h.264 compression, motion blur, and broadcast CGI before declaring a spatial or temporal physics violation.")
+            st.write("This engine analyzes biological motion, temporal consistency, and unauthorized watermark overlays to ensure the **Integrity of Digital Sports Media**.")
 
 with col2:
-    st.write("## ") # Push content down to align with header
-    st.write("## ") 
+    st.write("## \n## ") 
     
     if uploaded_file:
         if st.button("Initialize Deep Scan"):
-            
             temp_path = "temp_video.mp4"
             with open(temp_path, "wb") as f:
                 f.write(uploaded_file.getbuffer())
             
-            with st.status("Analyzing Media Integrity...", expanded=True) as status:
+            with st.status("Performing Multi-Layer Audit...", expanded=True) as status:
                 try:
-                    client = genai.Client(api_key=st.secrets["GOOGLE_API_KEY"])
-                    st.write("🛰️ Connecting to Neural Engine...")
+                    client = genai.Client(api_key='AIzaSyDD4L7TnfAoXiB96P3Gdlki-_KPqtFwWVA')
+                    
+                    st_lottie(lottie_scanning, height=150, key="scanning")
+                    
+                    # SYSTEM INSTRUCTION: Updated for the GDG Solution Challenge Qn
                     instruction = """
-                    You are a highly conservative Digital Video Analyst. 
-                    1. THE NULL HYPOTHESIS: Your default assumption is that the video is REAL.
-                    2. IGNORE BROADCAST GRAPHICS: Ignore scorecards, lower-thirds, and CGI logos. 
-                    3. FOCUS ON SUBJECTS: Look for AI signatures ONLY in human features.
-                    4. COMPRESSION VS. AI: Do not mistake motion blur or macroblocking for AI.
+                    You are a Sports Media Integrity Expert. Your goal is to detect deepfakes AND unauthorized redistribution.
+                    1. ANALYSIS: Look for AI artifacts in faces/motion AND unauthorized logos or pirate stream overlays.
+                    2. VERDICT RULES: 
+                       - If original: FINAL_VERDICT: AUTHENTIC
+                       - If deepfake: FINAL_VERDICT: MANIPULATED
+                       - If pirated/restreamed: FINAL_VERDICT: UNAUTHORIZED REDISTRIBUTION
+                    3. FORMAT: You MUST end with exactly:
+                       FINAL_VERDICT: [RESULT]
+                       CONFIDENCE_SCORE: [Number]%
                     """
                     
-                    st.write("📤 Uploading frames for pixel-level inspection...")
+                    st.write("📤 Uploading to Neural Engine...")
                     gemini_file = client.files.upload(file=temp_path)
                     
                     while gemini_file.state.name == "PROCESSING":
                         time.sleep(2)
                         gemini_file = client.files.get(name=gemini_file.name)
                     
-                    st.write("🧠 Running Forensic Logic...")
-                    user_prompt = """
-                    Analyze this video by strictly following these steps:
-                    Step 1: Describe the scene objectively.
-                    Step 2: Note any visual anomalies.
-                    Step 3: Explain how standard compression or motion blur could cause the anomalies.
-                    Step 4: Provide your final verdict (REAL or AI-GENERATED) and a Confidence Score.
-                    """
+                    st.write("🧠 Executing Forensic Logic...")
                     
                     response = client.models.generate_content(
                         model="gemini-3.1-pro-preview",
                         config={'system_instruction': instruction},
-                        contents=[gemini_file, user_prompt]
+                        contents=[gemini_file, "Audit this sports clip for content integrity and distribution rights."]
                     )
                     
                     status.update(label="Analysis Complete", state="complete", expanded=False)
                     
-                    # --- THE VERDICT DISPLAY ---
-                    is_real = "VERDICT: REAL" in response.text.upper()
-                    verdict_color = "#34c759" if is_real else "#ff3b30" # Apple Green vs Apple Red
-                    verdict_text = "Authentic (Original)" if is_real else "Suspicious (Manipulated)"
+                    # --- ROBUST PARSING ENGINE ---
+                    response_text = response.text.upper()
                     
-                    # Regex to hunt down the confidence score number the AI outputs
-                    match = re.search(r'Confidence Score:\s*(\d+)', response.text, re.IGNORECASE)
+                    # Logic to sync UI colors with Text
+                    if "FINAL_VERDICT: AUTHENTIC" in response_text:
+                        verdict_color = "#34c759" # Apple Green
+                        verdict_label = "Authentic"
+                    elif "FINAL_VERDICT: MANIPULATED" in response_text:
+                        verdict_color = "#ff3b30" # Apple Red
+                        verdict_label = "Manipulated (Fake)"
+                    elif "FINAL_VERDICT: UNAUTHORIZED" in response_text:
+                        verdict_color = "#ff9500" # Apple Orange
+                        verdict_label = "Unauthorized Redistribution"
+                    else:
+                        verdict_color = "#86868b" # Grey
+                        verdict_label = "Inconclusive"
+                    
+                    match = re.search(r'CONFIDENCE_SCORE:\s*(\d+)', response_text)
                     confidence = int(match.group(1)) if match else 100
 
-                    # The new styled report card with the dynamic progress bar
+                    # --- METRICS DISPLAY (OPTION 2) ---
+                    m_col1, m_col2 = st.columns(2)
+                    with m_col1:
+                        st.metric(label="System Verdict", value=verdict_label)
+                    with m_col2:
+                        st.metric(label="Confidence Level", value=f"{confidence}%")
+                    style_metric_cards(background_color="rgba(255,255,255,0.05)", border_left_color=verdict_color)
+
+                    # Apple Progress Bar
                     st.markdown(f"""
                         <div class="report-card">
-                            <h3 style='color: {verdict_color}; margin-top: 0; margin-bottom: 5px;'>{verdict_text}</h3>
-                            <p style='color: #86868b; font-size: 0.9rem; margin-bottom: 5px; font-weight: 600;'>Confidence Level: {confidence}%</p>
+                            <p style='color: #86868b; font-size: 0.9rem; margin-bottom: 5px; font-weight: 600;'>Neural Confidence Scan</p>
                             <div class="meter-container">
                                 <div class="meter-fill" style="width: {confidence}%; background-color: {verdict_color};"></div>
                             </div>
                         </div>
                     """, unsafe_allow_html=True)
 
-                    # Streamlit's native markdown renderer handles the bolding beautifully
                     st.markdown(response.text)
 
                 except Exception as e:
@@ -192,7 +201,8 @@ with col2:
                     if os.path.exists(temp_path):
                         os.remove(temp_path)
     else:
-        st.info("Please upload a video file to begin forensic processing.")
+        st_lottie(load_lottieurl("https://lottie.host/98506048-c89b-466d-926c-d9c98547209e/v5m5a8v9lM.json"), height=250)
+        st.info("Awaiting media input for digital integrity audit.")
 
 # --- 3. THE FOOTER ---
-st.markdown("<br><br><p style='text-align: center; color: #424245; font-size: 0.8rem;'>Hardware Accelerated Forensic Analysis • Built with Gemini 3.1 Pro</p>", unsafe_allow_html=True)
+st.markdown("<br><br><p style='text-align: center; color: #424245; font-size: 0.8rem;'>Digital Sports Integrity Framework • IIT Bhilai • Built with Gemini 3.1 Pro</p>", unsafe_allow_html=True)
