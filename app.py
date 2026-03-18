@@ -1,6 +1,7 @@
 import streamlit as st
 import time
 import os
+import re
 import requests
 from google import genai
 from streamlit_lottie import st_lottie
@@ -8,12 +9,11 @@ from streamlit_lottie import st_lottie
 # --- 1. GLOBAL PAGE SETUP ---
 st.set_page_config(page_title="Forensic Analyst Ultra", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 2. THE CLEAN-CUT CSS ---
+# --- 2. THE ULTIMATE CSS (No more ghost bars) ---
 st.markdown("""
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 
-    /* 1. Global Reset */
     .stApp {
         background-color: #050505;
         background-image: 
@@ -24,65 +24,68 @@ st.markdown("""
         background-attachment: fixed;
     }
 
-    [data-testid="stHeader"], [data-testid="stDecoration"] { display: none !important; }
-    .block-container { padding-top: 3rem !important; }
-
-    /* 2. THE MAGIC FIX: Target the container directly to create the Glass Card */
-    /* This selects the vertical block that follows our 'marker' */
-    [data-testid="stVerticalBlock"] > div:has(#glass-marker) {
-        background: rgba(255, 255, 255, 0.03) !important;
-        backdrop-filter: blur(40px) saturate(150%) !important;
-        -webkit-backdrop-filter: blur(40px) saturate(150%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
-        border-radius: 28px !important;
-        padding: 40px !important;
-        margin-top: 20px !important;
+    /* Target the specific container where content lives */
+    [data-testid="stVerticalBlock"] > div:has(div.glass-card) {
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(40px) saturate(150%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 24px;
+        padding: 40px;
     }
 
-    /* 3. Typography & UI */
+    [data-testid="stHeader"] { display: none !important; }
+    
     .ultra-title {
         font-family: 'Inter', sans-serif;
         font-weight: 900;
-        font-size: 5rem !important;
+        font-size: 4.5rem !important;
         letter-spacing: -3px;
-        color: white;
+        background: linear-gradient(to bottom, #fff 50%, rgba(255,255,255,0.2));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
         margin-bottom: 0px;
         line-height: 1;
     }
 
     .subtitle {
         color: #86868b; 
-        font-size: 1.1rem; 
-        margin-top: 5px;
-    }
-
-    div[role="radiogroup"] {
-        background: rgba(255,255,255,0.05) !important;
-        padding: 5px !important;
-        border-radius: 12px !important;
+        font-size: 1.2rem; 
+        margin-top: 5px; 
+        margin-bottom: 40px;
     }
     
-    /* Remove any default spacing between elements in the glass card */
-    [data-testid="stVerticalBlock"] { gap: 0rem !important; }
-    .stMarkdown, .stRadio, .stFileUploader { margin-bottom: 1.5rem !important; }
+    /* This invisible marker helps us target the container with CSS */
+    .glass-card { display: none; }
 
+    div[role="radiogroup"] {
+        background: rgba(255,255,255,0.05);
+        padding: 8px;
+        border-radius: 12px;
+    }
+
+    div.stButton > button {
+        background: linear-gradient(90deg, #0071e3, #00c6ff) !important;
+        border: none !important;
+        color: white !important;
+        border-radius: 100px !important;
+        width: 100%;
+    }
     </style>
 """, unsafe_allow_html=True)
 
 def load_lottie(url):
-    try: return requests.get(url, timeout=5).json()
+    try: 
+        r = requests.get(url, timeout=5)
+        return r.json() if r.status_code == 200 else None
     except: return None
 
 # --- 3. FRONT END ---
-
-# Title Section (Outside the card)
 st.markdown("<h1 class='ultra-title'>Forensic.</h1>", unsafe_allow_html=True)
 st.markdown("<p class='subtitle'>Digital Sports Integrity Framework</p>", unsafe_allow_html=True)
 
-# THE FIX: Create a container and drop a hidden 'marker' ID inside it.
-# Our CSS targets the parent of this ID to apply the glass effect.
+# THE FIX: Wrap everything in one container with an invisible marker
 with st.container():
-    st.markdown('<div id="glass-marker"></div>', unsafe_allow_html=True)
+    st.markdown('<div class="glass-card"></div>', unsafe_allow_html=True)
     
     col_left, col_right = st.columns([1, 1], gap="large")
 
@@ -91,19 +94,38 @@ with st.container():
         input_type = st.radio("Media Source", ["📁 Upload File", "🔗 Video URL"], horizontal=True, label_visibility="collapsed")
         
         file = None
-        if "Upload" in input_type:
+        media_ready = False
+
+        if input_type == "📁 Upload File":
             file = st.file_uploader("", type=["mp4", "mov"], label_visibility="collapsed")
+            if file:
+                st.video(file)
+                media_ready = True
         else:
             video_url = st.text_input("Paste video link...", placeholder="YouTube, Twitter, public MP4")
+            if video_url:
+                try:
+                    st.video(video_url)
+                    media_ready = True
+                except:
+                    st.error("Invalid video link.")
+
+        if not media_ready:
+            anim_waiting = load_lottie("https://assets5.lottiefiles.com/packages/lf20_6p8ovm.json")
+            if anim_waiting: st_lottie(anim_waiting, height=200)
+            else: st.info("Waiting for media uplink...")
 
     with col_right:
-        st.write("### System Status")
-        st.markdown("🟢 **Neural Engine:** Active")
-        st.markdown("🔵 **Uplink:** Waiting for input...")
-        
-        anim = load_lottie("https://assets10.lottiefiles.com/packages/lf20_st79sc61.json")
-        if anim: 
-            st_lottie(anim, height=180)
+        if media_ready:
+            st.write("### Analysis Engine")
+            if st.button("EXECUTE QUANTUM AUDIT"):
+                st.status("🔮 Analyzing...")
+        else:
+            st.write("### System Status")
+            st.markdown("🟢 **Neural Engine:** Active")
+            st.markdown("🔵 **Uplink:** Waiting for input...")
+            
+            anim_status = load_lottie("https://assets10.lottiefiles.com/packages/lf20_st79sc61.json")
+            if anim_status: st_lottie(anim_status, height=200)
 
-# Footer
-st.markdown("<p style='text-align: center; color: rgba(255,255,255,0.1); font-size: 0.8rem; margin-top: 60px;'>IIT BHILAI • GDG SOLUTION CHALLENGE 2026</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: rgba(255,255,255,0.1); font-size: 0.8rem; margin-top: 50px;'>IIT BHILAI • GDG SOLUTION CHALLENGE 2026</p>", unsafe_allow_html=True)
